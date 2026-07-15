@@ -1,82 +1,48 @@
-# Offline Coding Platform with Exam Mode & AI Assistant
+# Secure Programming Exam System
 
-A heavily customized, fully offline browser-based programming environment with built-in user management, task assignment, exam anti-cheat mechanisms, and a localized AI coding assistant.
+This project is an advanced, highly secure web-based Programming Examination System. It allows instructors to assign coding tasks, enforce strict anti-cheating protocols during the exam, and seamlessly review and grade student submissions.
 
----
+## Features Added to the Original System
 
-## 🚀 Custom Features Added
+The following core features were built and integrated directly into the system:
 
-This project was extensively extended from its base configuration. The following major features have been added:
+*   **Role-Based Authentication:** Complete User/Admin account system with JWT-based secure login.
+*   **Centralized Admin Dashboard:**
+    *   Create customized coding tasks for students.
+    *   Set precise exam deadlines.
+    *   Review all student submissions in a single table.
+    *   Grade submissions seamlessly.
+    *   Review detailed cheat logs for flagged students.
+*   **Student Dashboard:**
+    *   View assigned tasks and deadlines.
+    *   Instantly see grades on past submissions.
+    *   Start exams in a locked, controlled environment.
+    *   Automatic lockdown of expired or already-submitted exams.
+*   **Strict Anti-Cheat System:**
+    *   Forces the exam to run in Fullscreen mode.
+    *   Tracks tab-switching and window-blurring events.
+    *   Instantly locks the exam upon a violation with a massive 5-second penalty countdown timer.
+    *   Force-submits the student's code automatically to the server with a "Cheat Flag" if they violate the rules.
+*   **Robust PostgreSQL Backend:** Replaced the default temporary SQLite database with a production-ready PostgreSQL integration.
 
-1. **Fully Offline Execution Sandbox**: 
-   - Modified the docker-compose and configuration to bypass system cgroup requirements, enabling seamless isolated offline execution on modern Linux distros (e.g., Fedora) without disabling SELinux globally.
-2. **Local AI Assistant (Ollama)**:
-   - Stripped out cloud-based AI providers and replaced them with a local API integration connecting to **Ollama** (`localhost:11434`).
-   - The UI automatically loads locally downloaded models and performs inference 100% offline.
-3. **Admin & Student Role System**:
-   - Built a custom Node.js Express backend and SQLite database to support User and Admin accounts.
-   - **Admins** can create coding tasks and review student submissions and grades.
-   - **Students** have a personalized dashboard to view and start assigned tasks.
-4. **Exam Mode & Anti-Cheat Engine**:
-   - Starting a task triggers "Exam Mode," forcing the browser into fullscreen.
-   - A built-in anti-cheat monitor watches for `visibilitychange` and `blur` events (e.g., minimizing the browser or switching tabs to cheat).
-   - Violations are silently logged and compiled into a "Cheat Score" visible to the administrator.
-5. **UI Debloating**:
-   - Removed third-party cloud integrations (like Puter) and external copyright footers for a cleaner, unified local experience.
+## Open Source Projects & Copyrights
 
----
+This project builds upon several incredible open-source tools:
 
-## 🛠️ Open-Source Components & Copyrights
+*   **[Judge0 IDE](https://github.com/judge0/ide):** The core code editor UI. (MIT License - Copyright (c) 2016-present Herman Zvonimir Došilović)
+*   **[Judge0 CE](https://github.com/judge0/judge0):** The backend code execution engine that securely compiles and runs the student's code. (MIT License)
+*   **[Monaco Editor](https://microsoft.github.io/monaco-editor/):** The code editor component powering the text area, built by Microsoft. (MIT License)
+*   **[Semantic UI](https://semantic-ui.com/):** The frontend CSS framework used to build the dashboards and overlays. (MIT License)
+*   **[Express.js](https://expressjs.com/):** The Node.js web framework powering our custom Authentication and Task Management API. (MIT License)
+*   **[PostgreSQL](https://www.postgresql.org/):** The advanced open-source relational database used to store users, tasks, and submissions. (PostgreSQL License)
 
-This project stands on the shoulders of several incredible open-source projects. 
+## Quick Start
 
-### [Judge0 IDE](https://github.com/judge0/ide)
-- **Role**: Base frontend UI for the coding environment.
-- **Copyright**: © 2016-2026 Judge0 d.o.o.
-- **License**: MIT License
-
-### [Judge0 CE (Execution Engine)](https://github.com/judge0/judge0)
-- **Role**: The core isolated sandbox that compiles and executes code safely via Docker.
-- **Copyright**: © 2016-2026 Judge0 d.o.o.
-- **License**: MIT License
-
-### [Monaco Editor](https://microsoft.github.io/monaco-editor/)
-- **Role**: The powerful code editor that powers VS Code.
-- **Copyright**: © Microsoft Corporation
-- **License**: MIT License
-
-### [Semantic UI](https://semantic-ui.com/)
-- **Role**: The frontend CSS framework used for modals, buttons, and layouts.
-- **Copyright**: © Semantic UI
-- **License**: MIT License
-
-### Backend Stack
-- **Node.js, Express, and SQLite**: Used for the custom authentication, task assignment, and grading API.
-
----
-
-## ⚙️ Getting Started
-
-### Prerequisites
-- Docker and Docker Compose
-- (Optional) [Ollama](https://ollama.com/) running locally for the AI features.
-
-### Installation
-
-1. **Start the environment:**
-   \`\`\`bash
+1. Ensure you have Docker and Docker Compose installed.
+2. Clone this repository.
+3. Run the following command to start all microservices:
+   ```bash
    docker compose up -d --build
-   \`\`\`
-2. **Access the IDE:**
-   Open your browser and navigate to `http://localhost:8544`
-3. **Login:**
-   - Click **Login** in the top right.
-   - Default Admin credentials: `admin` / `admin123`
-   - Students can register their own accounts directly from the login modal.
-
-### Running AI Offline
-Ensure you have Ollama installed and running with CORS allowed:
-\`\`\`bash
-OLLAMA_ORIGINS="*" ollama serve
-\`\`\`
-Then, pull your preferred model (e.g., `ollama pull llama3`). The IDE will detect it automatically!
+   ```
+4. Access the IDE at `http://localhost:8544`.
+5. Log in as an administrator using the default credentials (`admin` / `admin123`) to access the dashboard and start creating exams!
