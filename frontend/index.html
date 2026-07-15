@@ -148,17 +148,14 @@
                 <input id="compiler-options" type="text" placeholder="Compiler options"></input>
             </div>
         </div>
-        <div class="item judge0-showCommandLineArguments">
-            <div class="ui left icon transparent input">
-                <i class="terminal icon"></i>
-                <input id="command-line-arguments" type="text" placeholder="Command line arguments"></input>
+        <div class="item judge0-showCommandLineArguments judge0-showRunButton">
+            <div class="ui action input" style="border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
+                <input id="command-line-arguments" type="text" placeholder="Command line args..." style="color: inherit; background: transparent; border: none; padding-left: 15px; width: 220px; outline: none;"></input>
+                <button id="run-btn" class="ui primary labeled icon button" data-content="+↵" style="margin: 0;">
+                    <i class="play icon"></i>
+                    Run Code
+                </button>
             </div>
-        </div>
-        <div class="item judge0-showRunButton">
-            <button id="run-btn" class="ui primary labeled icon button" data-content="+↵">
-                <i class="play icon"></i>
-                Run Code
-            </button>
         </div>
         <div class="right menu">
             <a id="exam-dashboard-btn" class="icon link item" data-content="Dashboard" style="display: none;">
