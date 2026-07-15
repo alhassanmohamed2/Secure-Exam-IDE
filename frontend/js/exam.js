@@ -223,9 +223,15 @@ async function renderAdminDashboard(token) {
         <div class="ui bottom attached tab segment" data-tab="tasks">
             <form class="ui form" id="create-task-form">
                 <h4 class="ui dividing header">Create New Task</h4>
-                <div class="field">
-                    <label>Title</label>
-                    <input type="text" id="task-title" required>
+                <div class="two fields">
+                    <div class="field">
+                        <label>Title</label>
+                        <input type="text" id="task-title" required>
+                    </div>
+                    <div class="field">
+                        <label>Deadline (Optional)</label>
+                        <input type="datetime-local" id="task-deadline">
+                    </div>
                 </div>
                 <div class="field">
                     <label>Description</label>
@@ -276,17 +282,31 @@ async function renderStudentDashboard(token) {
 
     let html = `
         <div class="ui relaxed divided list">
-            ${tasks.map(t => `
+            ${tasks.map(t => {
+                const isSubmitted = !!t.submission_id;
+                const isGraded = t.grade !== null && t.grade !== undefined;
+                const pastDeadline = t.deadline && new Date() > new Date(t.deadline);
+                const disabled = isSubmitted || pastDeadline;
+                
+                let btnText = "Start Exam";
+                if (isSubmitted) btnText = isGraded ? `Graded: ${t.grade}/100` : "Submitted";
+                else if (pastDeadline) btnText = "Deadline Passed";
+                
+                return `
                 <div class="item">
                     <div class="right floated content">
-                        <button class="ui primary button" onclick="startExam(${t.id}, '${t.title.replace(/'/g, "\\'")}')">Start Exam</button>
+                        <button class="ui ${disabled ? 'disabled' : 'primary'} button" ${disabled ? 'disabled' : ''} onclick="${disabled ? '' : `startExam(${t.id}, '${t.title.replace(/'/g, "\\'")}')`}">${btnText}</button>
                     </div>
                     <div class="content">
                         <div class="header">${t.title}</div>
-                        <div class="description">${t.description}</div>
+                        <div class="description">
+                            ${t.description}
+                            ${t.deadline ? `<br><small style="color:red;">Deadline: ${new Date(t.deadline).toLocaleString()}</small>` : ''}
+                        </div>
                     </div>
                 </div>
-            `).join('')}
+                `;
+            }).join('')}
         </div>
     `;
 
@@ -317,12 +337,15 @@ window.createStudent = async function() {
 window.createTask = async function() {
     const title = document.getElementById('task-title').value;
     const description = document.getElementById('task-desc').value;
+    let deadline = document.getElementById('task-deadline').value;
+    if (deadline) deadline = new Date(deadline).toISOString();
+
     const token = localStorage.getItem('token');
 
     await fetch(`${API_BASE}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ title, description, language_id: 0 })
+        body: JSON.stringify({ title, description, language_id: 0, deadline })
     });
     
     openDashboard(); // reload

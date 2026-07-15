@@ -36,6 +36,7 @@ const initDB = async () => {
                 title VARCHAR(255) NOT NULL,
                 description TEXT NOT NULL,
                 language_id INTEGER,
+                deadline TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);

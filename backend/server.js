@@ -71,13 +71,13 @@ app.get('/api/users', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 app.post('/api/tasks', authenticateToken, requireAdmin, async (req, res) => {
-    const { title, description, language_id } = req.body;
+    const { title, description, language_id, deadline } = req.body;
     try {
         const { rows } = await db.query(
-            "INSERT INTO exam_tasks (title, description, language_id) VALUES ($1, $2, $3) RETURNING id", 
-            [title, description, language_id]
+            "INSERT INTO exam_tasks (title, description, language_id, deadline) VALUES ($1, $2, $3, $4) RETURNING id", 
+            [title, description, language_id, deadline || null]
         );
-        res.status(201).json({ id: rows[0].id, title, description, language_id });
+        res.status(201).json({ id: rows[0].id, title, description, language_id, deadline });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -85,8 +85,19 @@ app.post('/api/tasks', authenticateToken, requireAdmin, async (req, res) => {
 
 app.get('/api/tasks', authenticateToken, async (req, res) => {
     try {
-        const { rows } = await db.query("SELECT * FROM exam_tasks ORDER BY created_at DESC");
-        res.json(rows);
+        if (req.user.role === 'admin') {
+            const { rows } = await db.query("SELECT * FROM exam_tasks ORDER BY created_at DESC");
+            return res.json(rows);
+        } else {
+            const query = `
+                SELECT t.*, s.id as submission_id, s.grade 
+                FROM exam_tasks t 
+                LEFT JOIN exam_submissions s ON t.id = s.task_id AND s.student_id = $1 
+                ORDER BY t.created_at DESC
+            `;
+            const { rows } = await db.query(query, [req.user.id]);
+            return res.json(rows);
+        }
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -97,6 +108,15 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
     
     const { task_id, code, language_id, cheat_score, cheat_events } = req.body;
     try {
+        const checkRes = await db.query("SELECT id FROM exam_submissions WHERE task_id = $1 AND student_id = $2", [task_id, req.user.id]);
+        if (checkRes.rows.length > 0) return res.status(403).json({ error: 'You have already submitted this exam.' });
+
+        const taskRes = await db.query("SELECT deadline FROM exam_tasks WHERE id = $1", [task_id]);
+        if (taskRes.rows.length === 0) return res.status(404).json({ error: 'Task not found' });
+        if (taskRes.rows[0].deadline && new Date() > new Date(taskRes.rows[0].deadline)) {
+            return res.status(403).json({ error: 'The deadline for this exam has passed.' });
+        }
+
         const { rows } = await db.query(
             `INSERT INTO exam_submissions (task_id, student_id, code, language_id, cheat_score, cheat_events) 
              VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, 
