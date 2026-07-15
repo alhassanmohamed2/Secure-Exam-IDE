@@ -327,7 +327,6 @@ window.startExam = function(taskId, taskTitle) {
     $('#dashboard-modal').modal('hide');
     alert(`Starting Exam: ${taskTitle}. You will be placed in fullscreen mode. Switching tabs or exiting fullscreen will be recorded as CHEATING.`);
     
-    examState.isActive = true;
     examState.taskId = taskId;
     examState.cheatScore = 0;
     examState.cheatEvents = [];
@@ -338,6 +337,11 @@ window.startExam = function(taskId, taskTitle) {
             console.error("Error attempting to enable fullscreen:", err);
         });
     }
+
+    // Give browser time to finish the fullscreen transition before activating anti-cheat
+    setTimeout(() => {
+        examState.isActive = true;
+    }, 2000);
 
     // Inject submit button if not present
     if (!document.getElementById('exam-submit-btn')) {
