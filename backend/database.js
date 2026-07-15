@@ -21,7 +21,7 @@ const initDB = async () => {
         
         // Create Users table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE IF NOT EXISTS exam_users (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
@@ -31,7 +31,7 @@ const initDB = async () => {
 
         // Create Tasks table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS tasks (
+            CREATE TABLE IF NOT EXISTS exam_tasks (
                 id SERIAL PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 description TEXT NOT NULL,
@@ -42,10 +42,10 @@ const initDB = async () => {
 
         // Create Submissions table
         await client.query(`
-            CREATE TABLE IF NOT EXISTS submissions (
+            CREATE TABLE IF NOT EXISTS exam_submissions (
                 id SERIAL PRIMARY KEY,
-                task_id INTEGER REFERENCES tasks(id),
-                student_id INTEGER REFERENCES users(id),
+                task_id INTEGER REFERENCES exam_tasks(id),
+                student_id INTEGER REFERENCES exam_users(id),
                 code TEXT NOT NULL,
                 language_id INTEGER NOT NULL,
                 cheat_score INTEGER DEFAULT 0,
@@ -56,11 +56,11 @@ const initDB = async () => {
         `);
 
         // Insert default admin user if none exists
-        const res = await client.query("SELECT * FROM users WHERE username = 'admin'");
+        const res = await client.query("SELECT * FROM exam_users WHERE username = 'admin'");
         if (res.rows.length === 0) {
             const salt = bcrypt.genSaltSync(10);
             const hash = bcrypt.hashSync('admin123', salt);
-            await client.query("INSERT INTO users (username, password, role) VALUES ($1, $2, $3)", ['admin', hash, 'admin']);
+            await client.query("INSERT INTO exam_users (username, password, role) VALUES ($1, $2, $3)", ['admin', hash, 'admin']);
             console.log("Created default admin account (admin / admin123)");
         }
         
