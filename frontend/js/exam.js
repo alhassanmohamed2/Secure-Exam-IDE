@@ -150,11 +150,13 @@ function updateAuthUI() {
     if (token) {
         document.getElementById('auth-login-btn').style.display = 'none';
         document.getElementById('auth-logout-btn').style.display = 'block';
+        document.getElementById('auth-change-password-btn').style.display = 'block';
         document.getElementById('auth-logout-btn').setAttribute('data-content', `Logout (${username})`);
         document.getElementById('exam-dashboard-btn').style.display = 'block';
     } else {
         document.getElementById('auth-login-btn').style.display = 'block';
         document.getElementById('auth-logout-btn').style.display = 'none';
+        document.getElementById('auth-change-password-btn').style.display = 'none';
         document.getElementById('exam-dashboard-btn').style.display = 'none';
     }
 }
@@ -266,9 +268,13 @@ async function renderAdminDashboard(token) {
             </form>
             <div class="ui divider"></div>
             <table class="ui celled table">
-                <thead><tr><th>Student ID</th><th>Username</th></tr></thead>
+                <thead><tr><th>Student ID</th><th>Username</th><th>Actions</th></tr></thead>
                 <tbody>
-                    ${(users.length ? users : []).map(u => `<tr><td>${u.id}</td><td>${u.username}</td></tr>`).join('')}
+                    ${(users.length ? users : []).map(u => `<tr>
+                        <td>${u.id}</td>
+                        <td>${u.username}</td>
+                        <td><button class="ui mini red button" onclick="resetStudentPassword(${u.id})">Reset Password</button></td>
+                    </tr>`).join('')}
                 </tbody>
             </table>
         </div>
@@ -338,6 +344,41 @@ window.createStudent = async function() {
     }
 }
 
+window.changeMyPassword = async function() {
+    const newPassword = prompt('Enter your new password:');
+    if (!newPassword) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`${API_BASE}/users/me/password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ new_password: newPassword })
+        });
+        if (!res.ok) throw new Error((await res.json()).error);
+        alert('Password changed successfully!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
+
+window.resetStudentPassword = async function(id) {
+    const newPassword = prompt('Enter new password for this student:');
+    if (!newPassword) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch(`${API_BASE}/users/${id}/password`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ new_password: newPassword })
+        });
+        if (!res.ok) throw new Error((await res.json()).error);
+        alert('Student password reset successfully!');
+    } catch (err) {
+        alert('Error: ' + err.message);
+    }
+}
 window.createTask = async function() {
     const title = document.getElementById('task-title').value;
     const description = document.getElementById('task-desc').value;

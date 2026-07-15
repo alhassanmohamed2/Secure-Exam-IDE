@@ -70,6 +70,32 @@ app.get('/api/users', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+app.put('/api/users/me/password', authenticateToken, async (req, res) => {
+    const { new_password } = req.body;
+    if (!new_password) return res.status(400).json({ error: 'New password is required' });
+    
+    const hash = bcrypt.hashSync(new_password, bcrypt.genSaltSync(10));
+    try {
+        await db.query("UPDATE exam_users SET password = $1 WHERE id = $2", [hash, req.user.id]);
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/users/:id/password', authenticateToken, requireAdmin, async (req, res) => {
+    const { new_password } = req.body;
+    if (!new_password) return res.status(400).json({ error: 'New password is required' });
+    
+    const hash = bcrypt.hashSync(new_password, bcrypt.genSaltSync(10));
+    try {
+        await db.query("UPDATE exam_users SET password = $1 WHERE id = $2", [hash, req.params.id]);
+        res.json({ message: 'User password reset successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/tasks', authenticateToken, requireAdmin, async (req, res) => {
     const { title, description, language_id, deadline } = req.body;
     try {
