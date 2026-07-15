@@ -117,9 +117,29 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function recordCheatEvent(reason) {
+    examState.isActive = false; // Immediately lock exam from further events
     examState.cheatScore += 1;
     examState.cheatEvents.push({ time: new Date().toISOString(), reason });
-    alert(`WARNING: ${reason}! This has been recorded as a cheat violation. Score: ${examState.cheatScore}`);
+    
+    const overlayHtml = `
+        <div id="cheat-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(200, 20, 20, 0.95); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center;">
+            <h1 style="font-size: 4rem; margin-bottom: 20px;">🚨 CHEATING DETECTED 🚨</h1>
+            <h2 style="font-size: 2rem; margin-bottom: 30px;">Violation: ${reason}</h2>
+            <h3 style="font-size: 1.5rem;">Your exam is locked and will be forcefully submitted in <span id="cheat-timer" style="font-size: 3rem; font-weight: bold; margin: 0 10px;">5</span> seconds.</h3>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', overlayHtml);
+    
+    let time = 5;
+    const timerInterval = setInterval(() => {
+        time--;
+        const timerSpan = document.getElementById('cheat-timer');
+        if (timerSpan) timerSpan.innerText = time;
+        if (time <= 0) {
+            clearInterval(timerInterval);
+            submitExam(true);
+        }
+    }, 1000);
 }
 
 function updateAuthUI() {
@@ -357,8 +377,8 @@ window.startExam = function(taskId, taskTitle) {
     }
 }
 
-window.submitExam = async function() {
-    if (!confirm('Are you sure you want to submit your exam?')) return;
+window.submitExam = async function(isForced = false) {
+    if (!isForced && !confirm('Are you sure you want to submit your exam?')) return;
 
     const token = localStorage.getItem('token');
     // Read the code from Monaco editor in ide.js
@@ -389,7 +409,13 @@ window.submitExam = async function() {
             })
         });
 
-        alert('Exam submitted successfully!');
+        if (isForced) {
+            alert('Your exam was forcefully submitted to the administrator due to an anti-cheat violation.');
+            const overlay = document.getElementById('cheat-overlay');
+            if (overlay) overlay.remove();
+        } else {
+            alert('Exam submitted successfully!');
+        }
         
         // Reset Exam Mode
         examState.isActive = false;
