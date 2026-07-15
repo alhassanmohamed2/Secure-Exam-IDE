@@ -429,8 +429,10 @@ window.submitExam = async function(isForced = false) {
         // Reset Exam Mode
         examState.isActive = false;
         examState.taskId = null;
-        if (document.fullscreenElement) document.exitFullscreen();
-        document.getElementById('exam-submit-btn').remove();
+        if (document.fullscreenElement) document.exitFullscreen().catch(e => console.log(e));
+        
+        const submitBtn = document.getElementById('exam-submit-btn');
+        if (submitBtn) submitBtn.remove();
 
     } catch (err) {
         alert('Error submitting exam: ' + err.message);
