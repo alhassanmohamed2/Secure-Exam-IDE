@@ -61,6 +61,15 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
+app.get('/api/users', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { rows } = await db.query("SELECT id, username, role FROM exam_users WHERE role = 'student' ORDER BY id DESC");
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/tasks', authenticateToken, requireAdmin, async (req, res) => {
     const { title, description, language_id } = req.body;
     try {

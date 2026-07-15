@@ -169,10 +169,15 @@ async function renderAdminDashboard(token) {
     const taskRes = await fetch(`${API_BASE}/tasks`, { headers: { 'Authorization': `Bearer ${token}` } });
     const tasks = await taskRes.json();
 
+    // Fetch Students
+    const usersRes = await fetch(`${API_BASE}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const users = await usersRes.json();
+
     let html = `
         <div class="ui top attached tabular menu">
             <a class="item active" data-tab="submissions">Submissions</a>
             <a class="item" data-tab="tasks">Tasks</a>
+            <a class="item" data-tab="students">Students</a>
         </div>
         
         <div class="ui bottom attached tab segment active" data-tab="submissions">
@@ -213,6 +218,30 @@ async function renderAdminDashboard(token) {
                 ${tasks.map(t => `<div class="item"><div class="content"><div class="header">${t.title}</div><div class="description">${t.description}</div></div></div>`).join('')}
             </div>
         </div>
+
+        <div class="ui bottom attached tab segment" data-tab="students">
+            <form class="ui form" id="create-student-form">
+                <h4 class="ui dividing header">Create New Student</h4>
+                <div class="two fields">
+                    <div class="field">
+                        <label>Username</label>
+                        <input type="text" id="new-student-username" required>
+                    </div>
+                    <div class="field">
+                        <label>Password</label>
+                        <input type="password" id="new-student-password" required>
+                    </div>
+                </div>
+                <button class="ui primary button" type="button" onclick="createStudent()">Create Student Account</button>
+            </form>
+            <div class="ui divider"></div>
+            <table class="ui celled table">
+                <thead><tr><th>Student ID</th><th>Username</th></tr></thead>
+                <tbody>
+                    ${(users.length ? users : []).map(u => `<tr><td>${u.id}</td><td>${u.username}</td></tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
     `;
 
     document.getElementById('dashboard-content').innerHTML = html;
@@ -245,6 +274,26 @@ async function renderStudentDashboard(token) {
 }
 
 // Admin Actions
+window.createStudent = async function() {
+    const username = document.getElementById('new-student-username').value;
+    const password = document.getElementById('new-student-password').value;
+    if (!username || !password) return alert("Please enter both username and password");
+    
+    try {
+        const res = await fetch(`${API_BASE}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        if (!res.ok) throw new Error((await res.json()).error);
+        alert("Student account created successfully!");
+        openDashboard(); // refresh dashboard
+    } catch (err) {
+        alert("Error creating student: " + err.message);
+    }
+}
+
 window.createTask = async function() {
     const title = document.getElementById('task-title').value;
     const description = document.getElementById('task-desc').value;
