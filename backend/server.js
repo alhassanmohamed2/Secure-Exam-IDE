@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const JWT_SECRET = 'supersecretkey123'; // In production, this should be an environment variable
+const JWT_SECRET = 'supersecretkey123';
 
 // --- Middleware for Authentication ---
 const authenticateToken = (req, res, next) => {
@@ -30,67 +30,76 @@ const requireAdmin = (req, res, next) => {
 
 // --- Routes ---
 
-// Login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    db.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
-        if (err || !user) return res.status(401).json({ error: 'Invalid credentials' });
+    try {
+        const { rows } = await db.query("SELECT * FROM users WHERE username = $1", [username]);
+        if (rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
         
+        const user = rows[0];
         if (bcrypt.compareSync(password, user.password)) {
             const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
             res.json({ token, role: user.role, username: user.username });
         } else {
             res.status(401).json({ error: 'Invalid credentials' });
         }
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Register (Student)
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
     const { username, password } = req.body;
     const salt = bcrypt.genSaltSync(10);
     const hash = bcrypt.hashSync(password, salt);
     
-    db.run("INSERT INTO users (username, password, role) VALUES (?, ?, 'student')", [username, hash], function(err) {
-        if (err) return res.status(400).json({ error: 'Username already exists' });
+    try {
+        await db.query("INSERT INTO users (username, password, role) VALUES ($1, $2, 'student')", [username, hash]);
         res.status(201).json({ message: 'User created' });
-    });
+    } catch (err) {
+        res.status(400).json({ error: 'Username already exists' });
+    }
 });
 
-// Create Task (Admin only)
-app.post('/api/tasks', authenticateToken, requireAdmin, (req, res) => {
+app.post('/api/tasks', authenticateToken, requireAdmin, async (req, res) => {
     const { title, description, language_id } = req.body;
-    db.run("INSERT INTO tasks (title, description, language_id) VALUES (?, ?, ?)", 
-        [title, description, language_id], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ id: this.lastID, title, description, language_id });
-    });
+    try {
+        const { rows } = await db.query(
+            "INSERT INTO tasks (title, description, language_id) VALUES ($1, $2, $3) RETURNING id", 
+            [title, description, language_id]
+        );
+        res.status(201).json({ id: rows[0].id, title, description, language_id });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Get Tasks
-app.get('/api/tasks', authenticateToken, (req, res) => {
-    db.all("SELECT * FROM tasks ORDER BY created_at DESC", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+app.get('/api/tasks', authenticateToken, async (req, res) => {
+    try {
+        const { rows } = await db.query("SELECT * FROM tasks ORDER BY created_at DESC");
         res.json(rows);
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Submit Task (Student only)
-app.post('/api/submissions', authenticateToken, (req, res) => {
+app.post('/api/submissions', authenticateToken, async (req, res) => {
     if (req.user.role !== 'student') return res.status(403).json({ error: 'Only students can submit' });
     
     const { task_id, code, language_id, cheat_score, cheat_events } = req.body;
-    
-    db.run(`INSERT INTO submissions (task_id, student_id, code, language_id, cheat_score, cheat_events) 
-            VALUES (?, ?, ?, ?, ?, ?)`, 
-        [task_id, req.user.id, code, language_id, cheat_score, JSON.stringify(cheat_events)], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.status(201).json({ id: this.lastID, message: 'Submitted successfully' });
-    });
+    try {
+        const { rows } = await db.query(
+            `INSERT INTO submissions (task_id, student_id, code, language_id, cheat_score, cheat_events) 
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, 
+            [task_id, req.user.id, code, language_id, cheat_score, JSON.stringify(cheat_events)]
+        );
+        res.status(201).json({ id: rows[0].id, message: 'Submitted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Get Submissions (Admin only)
-app.get('/api/submissions', authenticateToken, requireAdmin, (req, res) => {
+app.get('/api/submissions', authenticateToken, requireAdmin, async (req, res) => {
     const query = `
         SELECT s.*, u.username, t.title as task_title 
         FROM submissions s 
@@ -98,22 +107,25 @@ app.get('/api/submissions', authenticateToken, requireAdmin, (req, res) => {
         JOIN tasks t ON s.task_id = t.id 
         ORDER BY s.created_at DESC
     `;
-    db.all(query, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        const { rows } = await db.query(query);
         res.json(rows);
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-// Grade Submission (Admin only)
-app.put('/api/submissions/:id/grade', authenticateToken, requireAdmin, (req, res) => {
+app.put('/api/submissions/:id/grade', authenticateToken, requireAdmin, async (req, res) => {
     const { grade } = req.body;
-    db.run("UPDATE submissions SET grade = ? WHERE id = ?", [grade, req.params.id], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        await db.query("UPDATE submissions SET grade = $1 WHERE id = $2", [grade, req.params.id]);
         res.json({ message: 'Grade updated' });
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Backend server running on port ${PORT}`);
+    console.log(\`Backend server running on port \${PORT}\`);
 });

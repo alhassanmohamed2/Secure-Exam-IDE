@@ -130,7 +130,7 @@ function updateAuthUI() {
     if (token) {
         document.getElementById('auth-login-btn').style.display = 'none';
         document.getElementById('auth-logout-btn').style.display = 'block';
-        document.getElementById('auth-logout-btn').innerHTML = `<i class="sign-out icon"></i> Logout (${username})`;
+        document.getElementById('auth-logout-btn').setAttribute('data-content', `Logout (${username})`);
         document.getElementById('exam-dashboard-btn').style.display = 'block';
     } else {
         document.getElementById('auth-login-btn').style.display = 'block';
