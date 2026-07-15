@@ -52,9 +52,14 @@ const initDB = async () => {
                 cheat_score INTEGER DEFAULT 0,
                 cheat_events TEXT,
                 grade INTEGER,
+                output TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+
+        // Migrate existing table
+        await client.query(`ALTER TABLE exam_submissions ADD COLUMN IF NOT EXISTS output TEXT;`);
+
 
         // Insert default admin user if none exists
         const res = await client.query("SELECT * FROM exam_users WHERE username = 'admin'");

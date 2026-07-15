@@ -1,5 +1,5 @@
 // Exam Mode and Admin Logic
-import { sourceEditor } from './ide.js';
+import { sourceEditor, stdoutEditor } from './ide.js';
 
 const API_BASE = 'http://localhost:3000/api';
 let examState = {
@@ -415,18 +415,27 @@ window.viewSubmissionCode = function(id) {
     if (!s) return;
     
     const codeEscaped = s.code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const outputEscaped = s.output ? s.output.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'No output recorded.';
     
     const modalHtml = `
         <div class="ui modal" id="code-viewer-modal">
             <i class="close icon"></i>
             <div class="header">
-                Submission Code
+                Submission Viewer
                 <div class="sub header">Task: ${s.task_title} | Student: ${s.username}</div>
             </div>
-            <div class="content" style="background: #1e1e1e;">
-                <pre style="margin: 0; color: #d4d4d4; font-family: monospace; font-size: 14px; white-space: pre-wrap;"><code>${codeEscaped}</code></pre>
+            <div class="content" style="background: #1e1e1e; display: flex; flex-direction: column; gap: 15px; max-height: 70vh; overflow-y: auto;">
+                <div>
+                    <h4 style="color: #fff; margin-bottom: 5px;">Source Code:</h4>
+                    <pre style="margin: 0; color: #d4d4d4; font-family: monospace; font-size: 14px; white-space: pre-wrap; background: #2d2d2d; padding: 10px; border-radius: 4px;"><code>${codeEscaped}</code></pre>
+                </div>
+                <div>
+                    <h4 style="color: #fff; margin-bottom: 5px;">Execution Output:</h4>
+                    <pre style="margin: 0; color: #a5d6a7; font-family: monospace; font-size: 14px; white-space: pre-wrap; background: #000; padding: 10px; border-radius: 4px;"><code>${outputEscaped}</code></pre>
+                </div>
             </div>
             <div class="actions">
+                <div class="ui blue button" onclick="loadCodeIntoIDE(${s.id})"><i class="play icon"></i> Load into IDE</div>
                 <div class="ui primary approve button">Close</div>
             </div>
         </div>
@@ -443,6 +452,22 @@ window.viewSubmissionCode = function(id) {
         onHidden: function() { $(this).remove(); }
     }).modal('show');
 }
+
+window.loadCodeIntoIDE = function(id) {
+    const s = window.submissionsMap[id];
+    if (s && sourceEditor) {
+        sourceEditor.setValue(s.code);
+        const sel = document.getElementById('select-language');
+        if (sel) {
+            sel.value = s.language_id;
+            $(sel).dropdown('set selected', String(s.language_id));
+        }
+        $('#dashboard-modal').modal('hide');
+        $('#code-viewer-modal').modal('hide');
+    }
+}
+    
+
 
 // Student Exam Action
 window.startExam = function(taskId, taskTitle) {
@@ -503,9 +528,12 @@ window.submitExam = async function(isForced = false) {
         return;
     }
 
-    let languageId = 71; // Default Python, should read from select-language but fine for now
+    let languageId = 71; // Default Python
     const sel = document.getElementById('select-language');
     if (sel && sel.value) languageId = parseInt(sel.value);
+
+    let output = '';
+    if (stdoutEditor) output = stdoutEditor.getValue();
 
     try {
         await fetch(`${API_BASE}/submissions`, {
@@ -516,7 +544,8 @@ window.submitExam = async function(isForced = false) {
                 code: code,
                 language_id: languageId,
                 cheat_score: examState.cheatScore,
-                cheat_events: examState.cheatEvents
+                cheat_events: examState.cheatEvents,
+                output: output
             })
         });
 

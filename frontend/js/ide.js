@@ -35,7 +35,7 @@ var layout;
 
 export var sourceEditor;
 var stdinEditor;
-var stdoutEditor;
+export var stdoutEditor;
 
 var $selectLanguage;
 var $compilerOptions;

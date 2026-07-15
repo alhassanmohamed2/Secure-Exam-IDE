@@ -132,7 +132,7 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
 app.post('/api/submissions', authenticateToken, async (req, res) => {
     if (req.user.role !== 'student') return res.status(403).json({ error: 'Only students can submit' });
     
-    const { task_id, code, language_id, cheat_score, cheat_events } = req.body;
+    const { task_id, code, language_id, cheat_score, cheat_events, output } = req.body;
     try {
         const checkRes = await db.query("SELECT id FROM exam_submissions WHERE task_id = $1 AND student_id = $2", [task_id, req.user.id]);
         if (checkRes.rows.length > 0) return res.status(403).json({ error: 'You have already submitted this exam.' });
@@ -144,9 +144,9 @@ app.post('/api/submissions', authenticateToken, async (req, res) => {
         }
 
         const { rows } = await db.query(
-            `INSERT INTO exam_submissions (task_id, student_id, code, language_id, cheat_score, cheat_events) 
-             VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`, 
-            [task_id, req.user.id, code, language_id, cheat_score, JSON.stringify(cheat_events)]
+            `INSERT INTO exam_submissions (task_id, student_id, code, language_id, cheat_score, cheat_events, output) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`, 
+            [task_id, req.user.id, code, language_id, cheat_score, JSON.stringify(cheat_events), output]
         );
         res.status(201).json({ id: rows[0].id, message: 'Submitted successfully' });
     } catch (err) {
