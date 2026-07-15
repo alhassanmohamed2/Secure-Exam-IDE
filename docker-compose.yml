@@ -1,0 +1,62 @@
+services:
+  # 1. The Multi-Language Sandbox Code Execution Engine
+  server:
+    image: mrkushalsm/judge0:cgv2
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    ports:
+      - "2358:2358"
+    privileged: true # Required for creating secure cgroup sandboxes for code isolation
+    security_opt:
+      - label=disable
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    image: mrkushalsm/judge0:cgv2
+    command: ["./scripts/workers"]
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+    security_opt:
+      - label=disable
+    depends_on:
+      - db
+      - redis
+
+
+  # 2. Queue management for code runs
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+
+  # 3. Database for configuration storage
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: judge0
+      POSTGRES_USER: judge0
+      POSTGRES_PASSWORD: judge0password
+
+  # 4. Serve the static frontend using Nginx
+  ui:
+    image: nginx:alpine
+    ports:
+      - "8544:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro  # Mounts the cloned frontend
+    depends_on:
+      - server
+
+  # 5. Backend for User Admin & Tasks
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend/database.sqlite:/app/database.sqlite:rw
+    depends_on:
+      - ui

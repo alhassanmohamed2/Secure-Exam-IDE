@@ -1,0 +1,14 @@
+# Node
+backend/node_modules/
+backend/package-lock.json
+
+# Database
+backend/database.sqlite
+
+# Logs
+server_logs.txt
+server_logs_new.txt
+*.log
+
+# OS
+.DS_Store
