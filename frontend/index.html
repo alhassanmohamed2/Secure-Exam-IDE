@@ -158,20 +158,22 @@
             </div>
         </div>
         <div class="right menu">
-            <a id="exam-dashboard-btn" class="icon link item" data-content="Dashboard" style="display: none;">
-                <i class="tasks icon"></i>
-            </a>
-            <a id="auth-change-password-btn" class="icon link item" data-content="Change Password" style="display: none;" onclick="changeMyPassword()">
-                <i class="key icon"></i>
-            </a>
-            <a id="auth-login-btn" class="icon link item" data-content="Login">
-                <i class="user icon"></i>
-            </a>
-            <a id="auth-logout-btn" class="icon link item" data-content="Logout" style="display: none;">
-                <i class="sign-out icon"></i>
-            </a>
-            <div id="judge0-theme-toggle-btn" class="icon link item judge0-showThemeButton" data-content="Toggle Theme">
-                <i id="judge0-theme-toggle-btn-icon" class="sun icon"></i>
+            <div class="item" style="display: flex; gap: 20px; padding-right: 20px;">
+                <a id="exam-dashboard-btn" data-content="Dashboard" style="display: none; cursor: pointer; color: inherit; font-size: 1.2em; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <i class="tasks icon" style="margin: 0;"></i>
+                </a>
+                <a id="auth-change-password-btn" data-content="Change Password" style="display: none; cursor: pointer; color: inherit; font-size: 1.2em; transition: opacity 0.2s;" onclick="changeMyPassword()" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <i class="key icon" style="margin: 0;"></i>
+                </a>
+                <a id="auth-login-btn" data-content="Login" style="cursor: pointer; color: inherit; font-size: 1.2em; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <i class="user icon" style="margin: 0;"></i>
+                </a>
+                <a id="auth-logout-btn" data-content="Logout" style="display: none; cursor: pointer; color: inherit; font-size: 1.2em; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <i class="sign-out icon" style="margin: 0;"></i>
+                </a>
+                <a id="judge0-theme-toggle-btn" class="judge0-showThemeButton" data-content="Toggle Theme" style="cursor: pointer; color: inherit; font-size: 1.2em; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.7" onmouseout="this.style.opacity=1">
+                    <i id="judge0-theme-toggle-btn-icon" class="sun icon" style="margin: 0;"></i>
+                </a>
             </div>
             <div class="item judge0-showPuterSignInOutButton">
                 <button id="judge0-sign-in-btn" class="ui basic button">
