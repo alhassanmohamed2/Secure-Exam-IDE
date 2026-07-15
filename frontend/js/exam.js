@@ -184,6 +184,9 @@ async function renderAdminDashboard(token) {
     // Fetch Submissions
     const subRes = await fetch(`${API_BASE}/submissions`, { headers: { 'Authorization': `Bearer ${token}` } });
     const submissions = await subRes.json();
+    
+    window.submissionsMap = {};
+    submissions.forEach(s => window.submissionsMap[s.id] = s);
 
     // Fetch Tasks
     const taskRes = await fetch(`${API_BASE}/tasks`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -211,6 +214,7 @@ async function renderAdminDashboard(token) {
                             <td>${s.grade !== null ? s.grade : '<i>Ungraded</i>'}</td>
                             <td class="${s.cheat_score > 0 ? 'error' : 'positive'}">${s.cheat_score}</td>
                             <td>
+                                <button class="ui mini blue button" onclick="viewSubmissionCode(${s.id})">View Code</button>
                                 <button class="ui mini basic button" onclick="gradeSubmission(${s.id})">Grade</button>
                                 ${s.cheat_score > 0 ? `<button class="ui mini red button" onclick='alert(${JSON.stringify(s.cheat_events)})'>View Cheat Logs</button>` : ''}
                             </td>
@@ -363,6 +367,40 @@ window.gradeSubmission = async function(id) {
     });
     
     openDashboard(); // reload
+}
+
+window.viewSubmissionCode = function(id) {
+    const s = window.submissionsMap[id];
+    if (!s) return;
+    
+    const codeEscaped = s.code.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
+    const modalHtml = `
+        <div class="ui modal" id="code-viewer-modal">
+            <i class="close icon"></i>
+            <div class="header">
+                Submission Code
+                <div class="sub header">Task: ${s.task_title} | Student: ${s.username}</div>
+            </div>
+            <div class="content" style="background: #1e1e1e;">
+                <pre style="margin: 0; color: #d4d4d4; font-family: monospace; font-size: 14px; white-space: pre-wrap;"><code>${codeEscaped}</code></pre>
+            </div>
+            <div class="actions">
+                <div class="ui primary approve button">Close</div>
+            </div>
+        </div>
+    `;
+    
+    const existing = document.getElementById('code-viewer-modal');
+    if (existing) existing.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // We must enable multiple modals because we are opening this *on top* of the Dashboard Modal!
+    $('#code-viewer-modal').modal({
+        allowMultiple: true,
+        onHidden: function() { $(this).remove(); }
+    }).modal('show');
 }
 
 // Student Exam Action
