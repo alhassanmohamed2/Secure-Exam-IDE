@@ -378,7 +378,16 @@ window.startExam = function(taskId, taskTitle) {
 }
 
 window.submitExam = async function(isForced = false) {
-    if (!isForced && !confirm('Are you sure you want to submit your exam?')) return;
+    if (!isForced) {
+        // Temporarily disable anti-cheat because the confirm() dialog steals window focus!
+        examState.isActive = false; 
+        const wantsSubmit = confirm('Are you sure you want to submit your exam?');
+        if (!wantsSubmit) {
+            // Give the browser time to regain focus before turning anti-cheat back on
+            setTimeout(() => { examState.isActive = true; }, 1000);
+            return;
+        }
+    }
 
     const token = localStorage.getItem('token');
     // Read the code from Monaco editor in ide.js
